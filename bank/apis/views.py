@@ -91,30 +91,26 @@ def create_account(request):
 # api to update name 
 
 @api_view(['POST'])
-def update_account(request):
+def update_name(request):
     data = request.data
+    if (is_valid(str(data['name']))):
+        try :
+            account=Account.objects.get(acc_no=data['acc_no'])
+        except:
+            return JsonResponse({
+                'message':'No match found !',
+                'success':False
+            })
+        account.name= data['name']
+        account.save()
 
-    try :
-        update_user=Account.objects.get(acc_no=data['acc_no'])
-        serializer =SerializerBank(instance=update_user)
-        update_data=serializer.data
-        print(update_data['balance'])
-        update_acc={}
-        update_acc['name']=data['name']
-        update_acc['acc_no']=update_data['acc_no']
-        update_acc['balance']=update_data['balance']
-        serializer2 =SerializerBank(instance=update_user,data=update_acc)
-
-        if serializer2.is_valid():
-            serializer2.save()
-
-        return Response(serializer2.data)
-
-    except:
+        return JsonResponse(account.values())
+    else:
         return JsonResponse({
-            'message':'No match found !',
+            'message':'Invalid Name!',
             'success':False
         })
+
 
 # api to deposit money
 
@@ -138,3 +134,55 @@ def deposit(request):
         account.save()
 
         return JsonResponse(account.values())
+
+# api to withdraw money
+
+@api_view(['POST'])
+def debit(request):
+    data = request.data
+    if float(data['amount'])<=0.00 :
+        return JsonResponse({
+            'message':'Enter Valid Ammount!',
+            'success':False
+        })
+    else:
+        try :
+            account=Account.objects.get(acc_no=data['acc_no'])
+        except:
+            return JsonResponse({
+                'message':'No match found !',
+                'success':False
+            })
+        if(float(account.balance)<float(data['amount'])):
+
+            return JsonResponse({
+                'message':'Insufficient Balance!',
+                'success':False
+                })
+
+        else:
+            account.balance=float(account.balance)-(data['amount'])
+            account.save()
+            return JsonResponse(account.values())
+        
+        
+        
+
+# api to delete an account 
+
+@api_view(['POST'])
+def delete_account(request):
+
+    data=request.data
+    try:
+        account = Account.objects.get(acc_no=data['acc_no'])
+        account.delete()
+        return JsonResponse({
+            'message':'Deletion Successful',
+            'success': True
+        })
+    except:
+        return JsonResponse({
+            'message':'No match found !',
+            'success':False
+        })
