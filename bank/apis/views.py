@@ -111,6 +111,29 @@ def update_name(request):
             'success':False
         })
 
+# api to update multiple account.name 
+
+@api_view(['POST'])
+def update_name_multi(request):
+    data = request.data
+    for i in range(len(data)):
+        if (is_valid(str(data[str(i+1)]['name']))):
+            try :
+                account=Account.objects.get(acc_no=data[str(i+1)]['acc_no'])
+            except:
+                return JsonResponse({
+                    'message':'No match found !',
+                    'success':False
+                })
+            account.name= data[str(i+1)]['name']
+            account.save()
+            return JsonResponse(account.values())
+        else:
+            return JsonResponse({
+                'message':'Invalid Name!',
+                'success':False
+            })
+
 
 # api to deposit money
 
@@ -184,5 +207,20 @@ def delete_account(request):
     except:
         return JsonResponse({
             'message':'No match found !',
+            'success':False
+        })
+
+@api_view(['GET'])
+def del_all_account(request):
+    try:
+        account = Account.objects.all()
+        account.delete()
+        return JsonResponse({
+            'message':'Deletion Successful',
+            'success': True
+        })
+    except Exception as e:
+        return JsonResponse({
+            'message':str(e),
             'success':False
         })
