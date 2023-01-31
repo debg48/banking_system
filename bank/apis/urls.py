@@ -14,4 +14,8 @@ urlpatterns = [
     path('delete/', views.delete_account,name='delete'),
     path('delete-multi/', views.delete_acc_multi,name='delete-multi'),
     path('delete-all/', views.del_all_account,name='delete-all'),
+    path('loan/', views.get_loan,name='loan'),
+    path('status/', views.status_loan,name='status'),
+    path('all/', views.loan_all,name='status-all'),
+    path('return/', views.return_loan,name='return'),
 ]

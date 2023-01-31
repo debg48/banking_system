@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
 import random , string
-from . models import Account
+from . models import Account,Loan
+import datetime
 
 
 def generate_account():
@@ -24,9 +25,14 @@ def is_valid(name):
 
 @api_view(['GET'])
 def all_account(request):
-    account = Account.objects.all().values()
-    return Response(account)
-
+    try :
+        account = Account.objects.all().values()
+        return Response(account)
+    except Exception as e :
+        return JsonResponse({
+            "message" : str(e),
+            "success" : False
+        })
 # fetch a particular account
 
 @api_view(['POST'])
@@ -332,3 +338,108 @@ def del_all_account(request):
             'message':str(e),
             'success':False
         })
+
+# api to take loan (single  account)
+
+@api_view(['POST'])
+def get_loan(request):
+    data=request.data
+    if data['amount']<=50000 or data['amount']>100000000:
+        return JsonResponse({
+                    'message':'Enter Valid Amount',
+                    'success': False
+                })
+    else:
+        try:
+            check =  Loan.objects.get(acc_no=data['acc_no'])
+            return JsonResponse({
+                    'message':'Previous Loan not cleared!',
+                    'success': False
+                })
+        except:
+            try:
+                account = Account.objects.get(acc_no=data['acc_no'])
+                loan = Loan()
+                loan.name=account.name
+                loan.balance=account.balance
+                loan.acc_no=account.acc_no
+                loan.loan=data['amount']
+                loan.date=datetime.date.today()
+                loan.save()
+                return JsonResponse({
+                    'message':'Loan Granted',
+                    'success': True
+                })
+            except Exception as e:
+                return JsonResponse({
+                    'message':str(e),
+                    'success':False
+                })
+
+#api to view all loans
+
+@api_view(['GET'])
+def loan_all(request):
+    try:
+        loan =  Loan.objects.all().values()
+        return Response(loan)
+    except Exception as e :
+        return JsonResponse({
+            'message':str(e),
+            'success': False
+            })
+
+#api to check status of loan of a particular account
+
+@api_view(['POST'])
+def status_loan(request):
+    data=request.data
+    try:
+        loan =  Loan.objects.get(acc_no=data['acc_no'])
+        acc_details={}
+        acc_details['name']=loan.name
+        acc_details['acc_no']=loan.acc_no
+        acc_details['balance']=loan.balance
+        acc_details['loan']=loan.loan
+        acc_details['date']=loan.date
+
+        return JsonResponse(acc_details)
+        
+
+    except Exception as e:
+            return JsonResponse({
+                'message':str(e),
+                'success':False
+            })
+
+#api to return loan (single)
+
+@api_view(['POST'])
+def return_loan(request):
+    data=request.data
+    if data['amount']<=0:
+        return JsonResponse({
+                    'message':'Enter Valid Amount',
+                    'success': False
+                })
+    else:
+        try:
+            loan =  Loan.objects.get(acc_no=data['acc_no'])
+            if loan.loan < data['amount']:
+                return JsonResponse({
+                    'message':'Enter Valid Amount,amount exceeds loan',
+                    'success': False
+                })
+            else:
+                loan.loan=loan.loan - data['amount']
+                loan.save()
+                return JsonResponse({
+                    'message':'Return Accepted !',
+                    'success': True
+                })
+
+        except Exception as e:
+                return JsonResponse({
+                    'message':str(e),
+                    'success':False
+                })
