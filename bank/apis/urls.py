@@ -18,4 +18,5 @@ urlpatterns = [
     path('status/', views.status_loan,name='status'),
     path('all/', views.loan_all,name='status-all'),
     path('return/', views.return_loan,name='return'),
+    path('intrest/', views.intrest,name='intrest'),
 ]
